@@ -1,4 +1,4 @@
-# SimpleApi-with-db (Backend)
+# Course-Ecommerce (Backend)
 
 API REST para una plataforma e-commerce de cursos online. Implementada con Node.js, Express, MongoDB y Docker.
 
