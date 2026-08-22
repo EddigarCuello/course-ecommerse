@@ -4,8 +4,17 @@ import { errorHandler,notFoundHandler } from './middlewares/errorHandler.js';
 
 const app = express();
 
+
+//
+app.use((req,res,next) => {
+  console.log(`metodo de la peticion: ${req.method}\nurl de la peticion: ${req.url}`);
+  next();
+});
+
+
 //Middlewares globales
 app.use(express.json());
+
 
 //Rutas de la API
 app.use('/api/users', userRoutes);

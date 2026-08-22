@@ -1,11 +1,12 @@
-import { UserModel } from '../models/user.model.js';
+import { UserModel } from '../models/user.schema.js'; // O '../models/user.schema.js' según nombraste el archivo
+
 
 // GET /api/users
 export const obtenerUsuarios = async (req, res, next) => {
   try {
-    // .find() obtiene todos los documentos. .select('-passwordHash') oculta la contraseña
-    const usuarios = await UserModel.find().select('-passwordHash');
-    
+    // Obtenemos únicamente usuarios activos/no eliminados
+    const usuarios = await UserModel.find({ eliminado: false }).select('-passwordHash');
+
     res.status(200).json({
       ok: true,
       data: usuarios
@@ -15,11 +16,24 @@ export const obtenerUsuarios = async (req, res, next) => {
   }
 };
 
-// GET /api/users/:id
+// GET /api/users/:idOrEmail
 export const obtenerUsuarioPorId = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const usuario = await UserModel.findById(id).select('-passwordHash');
+    const { id } = req.params; // Viene como /:id en la ruta
+
+    // 1. Construir el query base
+    let query = { eliminado: false };
+
+    // 2. Validar si el parámetro enviado es un ID válido de MongoDB
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      query._id = id;
+    } else {
+      // Si no es un ObjectId válido, asumimos que intenta buscar por correo
+      query.email = id.toLowerCase();
+    }
+
+    // 3. Ejecutar la búsqueda
+    const usuario = await UserModel.findOne(query).select('-passwordHash');
 
     if (!usuario) {
       const error = new Error('Usuario no encontrado');
@@ -39,31 +53,61 @@ export const obtenerUsuarioPorId = async (req, res, next) => {
 // POST /api/users
 export const registrarUsuario = async (req, res, next) => {
   try {
-    const { nombre, email, password, rol } = req.body;
+    const {
+      nombre,
+      email,
+      password,
+      telefono,
+      pais,
+      ciudad,
+      rol,
+      avatarUrl,
+      bio,
+      idiomaPreferido,
+      detallesInstructor
+    } = req.body;
 
+    // Validar campos obligatorios
     if (!nombre || !email || !password) {
-      const error = new Error('Nombre, email y contraseña son obligatorios');
+      const error = new Error(
+        'Nombre, email y contraseña son obligatorios'
+      );
       error.statusCode = 400;
       return next(error);
     }
 
     // Comprobar si el email ya existe
     const usuarioExistente = await UserModel.findOne({ email });
+
     if (usuarioExistente) {
-      const error = new Error('El correo electrónico ya está registrado');
+      const error = new Error(
+        'El correo electrónico ya está registrado'
+      );
       error.statusCode = 400;
       return next(error);
     }
 
-    // Mongoose creará la colección y validará los campos según el Schema
+    // Crear usuario
     const nuevoUsuario = await UserModel.create({
       nombre,
       email,
-      passwordHash: password, // Próximamente lo encriptaremos con bcrypt
-      rol
+      passwordHash: password, // TODO: reemplazar por hash con bcrypt
+      telefono,
+      pais,
+      ciudad,
+      rol,
+      avatarUrl,
+      bio,
+      idiomaPreferido,
+
+      // Solo tendrá información si el usuario es instructor
+      detallesInstructor:
+        rol === 'instructor'
+          ? detallesInstructor
+          : undefined
     });
 
-    // Convertimos a objeto de JS para borrar la contraseña del JSON de respuesta
+    // Convertir a objeto para eliminar información sensible
     const usuarioRespuesta = nuevoUsuario.toObject();
     delete usuarioRespuesta.passwordHash;
 
@@ -72,6 +116,7 @@ export const registrarUsuario = async (req, res, next) => {
       message: 'Usuario registrado con éxito',
       data: usuarioRespuesta
     });
+
   } catch (error) {
     next(error);
   }
@@ -81,13 +126,40 @@ export const registrarUsuario = async (req, res, next) => {
 export const actualizarUsuario = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { nombre, rol } = req.body;
+    const {
+      nombre,
+      telefono,
+      pais,
+      ciudad,
+      rol,
+      activo,
+      avatarUrl,
+      bio,
+      idiomaPreferido,
+      detallesInstructor
+    } = req.body;
 
-    // { new: true } devuelve el usuario ya actualizado
-    // runValidators: true asegura que cumpla las reglas del Schema al editar
-    const usuarioActualizado = await UserModel.findByIdAndUpdate(
-      id,
-      { nombre, rol },
+    // Construimos el objeto de actualización de forma dinámica
+    const camposAActualizar = {
+      ...(nombre && { nombre }),
+      ...(telefono !== undefined && { telefono }),
+      ...(pais !== undefined && { pais }),
+      ...(ciudad !== undefined && { ciudad }),
+      ...(rol && { rol }),
+      ...(activo !== undefined && { activo }),
+      ...(avatarUrl !== undefined && { avatarUrl }),
+      ...(bio !== undefined && { bio }),
+      ...(idiomaPreferido && { idiomaPreferido })
+    };
+
+    // Manejar detalles de instructor si se actualiza a rol instructor o si ya lo es
+    if (rol === 'instructor' && detallesInstructor) {
+      camposAActualizar.detallesInstructor = detallesInstructor;
+    }
+
+    const usuarioActualizado = await UserModel.findOneAndUpdate(
+      { _id: id, eliminado: false },
+      camposAActualizar,
       { new: true, runValidators: true }
     ).select('-passwordHash');
 
@@ -107,11 +179,17 @@ export const actualizarUsuario = async (req, res, next) => {
   }
 };
 
-// DELETE /api/users/:id
+// DELETE /api/users/:id (Borrado Lógico)
 export const eliminarUsuario = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const usuarioEliminado = await UserModel.findByIdAndDelete(id);
+
+    // Se realiza un borrado lógico marcando 'eliminado: true' y desactivándolo
+    const usuarioEliminado = await UserModel.findOneAndUpdate(
+      { _id: id, eliminado: false },
+      { eliminado: true, activo: false },
+      { new: true }
+    );
 
     if (!usuarioEliminado) {
       const error = new Error('Usuario no encontrado');
