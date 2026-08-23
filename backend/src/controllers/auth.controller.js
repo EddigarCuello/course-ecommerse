@@ -1,6 +1,6 @@
 import { UserModel } from "../models/user.schema.js";
 
-
+// POST /api/auth/register
 export const register = async(req , res , next)=>{
 
     try{
@@ -61,6 +61,9 @@ export const register = async(req , res , next)=>{
 
 };
 
+
+
+// POST /api/auth/login
 export const login = async(req, res, next) => {
     try {
         //recibimos los datos del req.body
@@ -84,9 +87,18 @@ export const login = async(req, res, next) => {
             error.statusCode = 401;
             return next(error);
         }
-        //validar la contraseña (por ahora no se esta hasheando)
+        //validar la contraseña (por ahora no se esta hasheando)(obsoleto)
+        /*
         if (password !== usuario.passwordHash){
             const error = new Error('contraseña incorrecta');
+            error.statusCode = 401;
+            return next(error);
+        }
+        */
+        //usamos el metodo de instancia para verificar la password
+        const esPasswordValido = await usuario.compararPassword(password);
+        if(!esPasswordValido) {
+            const error = Error('credenciales incorrectas');
             error.statusCode = 401;
             return next(error);
         }
