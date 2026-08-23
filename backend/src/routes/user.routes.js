@@ -8,6 +8,8 @@ import {
   eliminarUsuario
 } from '../controllers/user.controller.js';
 
+
+
 const router = Router();
 
 // Rutas para la raíz: /api/users

@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new Schema(
   {
@@ -102,5 +103,31 @@ const userSchema = new Schema(
     versionKey: false
   }
 );
+
+
+//hook: pre-save(antes de guardar)
+//se ejecuta antes de .create() o .save()
+userSchema.pre('save', async function () {
+
+  //verifica en caliente al momento
+  //si la contraseña cambio para evitar volver a encriptar
+  if (!this.isModified('passwordHash')) return;
+
+  //generamos el salt para que 2 hash no sean iguales
+  //y encriptamos
+  const salt = await bcrypt.genSalt(10);
+  this.passwordHash = await bcrypt.hash(this.passwordHash,salt);
+
+});
+
+
+//metodo de instancia: osea meotdo apra cada documento/objeto individual
+//creado con el schema de mongoose.
+
+//compara el texto plano ingresado con el hash de la db
+userSchema.methods.compararPassword = async function (passwordIngresada) {
+  return await bcrypt.compare(passwordIngresada, this.passwordHash);
+}
+
 
 export const UserModel = model('User', userSchema);
