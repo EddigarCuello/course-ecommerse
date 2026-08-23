@@ -1,5 +1,5 @@
 import { UserModel } from '../models/user.schema.js'; // O '../models/user.schema.js' según nombraste el archivo
-
+import mongoose from 'mongoose';
 
 // GET /api/users
 export const obtenerUsuarios = async (req, res, next) => {
