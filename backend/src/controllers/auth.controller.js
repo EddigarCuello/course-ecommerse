@@ -1,0 +1,112 @@
+import { UserModel } from "../models/user.schema.js";
+
+
+export const register = async(req , res , next)=>{
+
+    try{
+        const {
+            nombre,
+            email, 
+            password, 
+            rol, 
+            telefono, 
+            pais, 
+            ciudad
+        } = req.body
+        
+        //Campos Obligatorios
+        if(!nombre || !email || !password){
+            const error = new Error('Nombre, Email y Constraseña son obligatorios');
+            error.statusCode = 400;
+            return next(error);
+
+        }
+
+        //Existe el correo?
+        const usuariosExistente = await UserModel.findOne({email});
+        if(usuariosExistente){
+            const error = new Error('Correo electronico ya registrado');
+            error.statusCode = 400;
+            return next(error);
+
+        }
+
+        //Crear el usuario
+        const nuevoUsuarios = await UserModel.create({
+            nombre,
+            email,
+            passwordHash: password,
+            telefono,
+            pais,
+            ciudad
+        });
+
+        //ocultamos la contrañesa para enviar una 
+        //respuesta.
+        const respuesta = nuevoUsuarios.toObject();
+        delete respuesta.passwordHash;
+
+
+        //devolvemos una respuesta
+        res.status(201).json({
+            ok : true,
+            message: 'Usuario registrado con exito',
+            data: respuesta
+        });
+
+    //manejo de errores
+    }catch(error){
+        next(error);
+    }
+
+};
+
+export const login = async(req, res, next) => {
+    try {
+        //recibimos los datos del req.body
+        const {
+            email,
+            password
+        } = req.body
+
+
+        //verificar los datos recibidos
+        if(!email || !password){
+            const error = new Error('email y contraseña obligatorios');
+            error.statusCode = 400;
+            return next(error);
+        }
+
+        //buscar que exista el usuario y que no este eliminado
+        const usuario = await UserModel.findOne({email, eliminado: false});
+        if(!usuario){
+            const error = new Error('credenciales incorrectas');
+            error.statusCode = 401;
+            return next(error);
+        }
+        //validar la contraseña (por ahora no se esta hasheando)
+        if (password !== usuario.passwordHash){
+            const error = new Error('contraseña incorrecta');
+            error.statusCode = 401;
+            return next(error);
+        }
+
+        //actualizar la ultima fecha de login
+        usuario.ultimoLogin = new Date();
+        await usuario.save({validateBeforeSave: false});
+
+        //ocultar contraseña de la respuesta
+        const respuesta = usuario.toObject();
+        delete respuesta.passwordHash;
+
+        //enviar respuesta
+        res.status(200).json({
+            ok: true,
+            message: 'Inicio de sesion exitoso',
+            data: respuesta
+        });
+    //manejo de errores
+    } catch (error) {
+        next(error);
+    }
+}
