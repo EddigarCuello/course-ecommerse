@@ -1,4 +1,6 @@
 import { CourseModel } from '../models/course.schema.js';
+import { CategoryModel } from '../models/category.schema.js';
+import { UserModel } from '../models/user.schema.js';
 import mongoose from 'mongoose';
 
 // GET /api/courses - Obtener todos los cursos activos

@@ -5,13 +5,16 @@ import Auth from "./pages/Auth.jsx";
 import Home from "./pages/Home.jsx";
 import Catalog from "./pages/Catalog.jsx";
 import Layout from "./components/Layout.jsx";
+import AdminLayout from "./pages/admin/AdminLayout.jsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import AdminCourses from "./pages/admin/AdminCourses.jsx";
+import AdminInstructors from "./pages/admin/AdminInstructors.jsx";
+import AdminEnrollments from "./pages/admin/AdminEnrollments.jsx";
 
-// Wrapper para páginas con Navbar
 function WithLayout({ children }) {
   return <Layout>{children}</Layout>;
 }
 
-// Páginas placeholder estáticas (sin lógica) para rutas del sidebar
 function Placeholder({ title }) {
   return (
     <div className="p-6 md:p-8 max-w-[800px] w-full">
@@ -22,6 +25,13 @@ function Placeholder({ title }) {
       </div>
     </div>
   );
+}
+
+// Guard admin: solo rol admin (backend Prime: rol enum, seed admin@gmail.com/AdminPassword123)
+function AdminRoute({ children }) {
+  const user = useAuthStore((s) => s.user);
+  if (user?.rol !== "admin") return <Navigate to="/" replace />;
+  return children;
 }
 
 export default function App() {
@@ -38,7 +48,6 @@ export default function App() {
         <Route path="/login" element={<Navigate to="/auth" replace />} />
         <Route path="/register" element={<Navigate to="/auth" replace />} />
 
-        {/* Rutas con Navbar */}
         <Route path="/" element={<WithLayout><Home /></WithLayout>} />
         <Route path="/catalog" element={<WithLayout><Catalog /></WithLayout>} />
         <Route path="/cursos" element={<Navigate to="/catalog" replace />} />
@@ -47,6 +56,21 @@ export default function App() {
         <Route path="/pagos" element={<WithLayout><Placeholder title="Pagos" /></WithLayout>} />
         <Route path="/perfil" element={<WithLayout><Placeholder title="Mi Perfil" /></WithLayout>} />
         <Route path="/ayuda" element={<WithLayout><Placeholder title="Ayuda" /></WithLayout>} />
+
+        {/* Admin — protegido por rol, layout independiente oscuro */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="courses" element={<AdminCourses />} />
+          <Route path="instructors" element={<AdminInstructors />} />
+          <Route path="enrollments" element={<AdminEnrollments />} />
+        </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
