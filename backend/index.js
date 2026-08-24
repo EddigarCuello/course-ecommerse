@@ -1,14 +1,18 @@
 import 'dotenv/config'; // Carga las variables del .env
 import app from './src/app.js';
 import { connectDB } from './src/config/db.js';
+import { createAdmin } from './src/config/create.admin.js';
 
 const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
-  // 1. Conectar a MongoDB en Docker
+  //Conectar a MongoDB en Docker
   await connectDB();
 
-  // 2. Levantar el servidor de Express
+  //crear la cuenta de admin si no existe
+  await createAdmin();
+
+  //Levantar el servidor de Express
   app.listen(PORT, () => {
     console.log(` Servidor corriendo en http://localhost:${PORT}`);
   });

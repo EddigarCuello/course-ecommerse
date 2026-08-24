@@ -1,7 +1,10 @@
 import express from 'express';
 import userRoutes from './routes/user.routes.js';
 import authRoutes from './routes/auth.routes.js'
+import courseRoutes from './routes/course.routes.js'
 import { errorHandler,notFoundHandler } from './middlewares/errorHandler.js';
+
+
 
 const app = express();
 
@@ -29,6 +32,7 @@ app.use((req, res, next) => {
 //Rutas de la API
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/courses', courseRoutes);
 
 app.get('/', (req, res) => {
   res.json({ ok: true, message: 'API REST E-commerce Cursos activa' });

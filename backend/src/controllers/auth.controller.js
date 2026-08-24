@@ -36,6 +36,7 @@ export const register = async(req , res , next)=>{
             nombre,
             email,
             passwordHash: password,
+            rol,
             telefono,
             pais,
             ciudad
