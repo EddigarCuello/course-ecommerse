@@ -1,4 +1,4 @@
-import { Home, BookOpen, GraduationCap, CreditCard, User, HelpCircle, LogOut, Settings } from "lucide-react";
+import { Home, BookOpen, GraduationCap, CreditCard, User, HelpCircle, LogOut, LayoutDashboard } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../hooks/useAuthStore.js";
 
@@ -8,19 +8,25 @@ import { useAuthStore } from "../hooks/useAuthStore.js";
  * Desktop: 70px -> 250px hover, curva en active
  * Mobile: barra inferior fija 60px
  */
-const navItems = [
-  { label: "Inicio", icon: Home, to: "/" },
-  { label: "Catálogo", icon: BookOpen, to: "/catalog" },
-  { label: "Mis Cursos", icon: GraduationCap, to: "/mis-cursos" },
-  { label: "Pagos", icon: CreditCard, to: "/pagos" },
-  { label: "Mi Perfil", icon: User, to: "/perfil" },
-  { label: "Ayuda", icon: HelpCircle, to: "/ayuda" },
-];
-
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const isAdmin = user?.rol === "admin";
+
+  const baseNavItems = [
+    { label: "Inicio", icon: Home, to: "/" },
+    { label: "Catálogo", icon: BookOpen, to: "/catalog" },
+    { label: "Mis Cursos", icon: GraduationCap, to: "/mis-cursos" },
+    { label: "Pagos", icon: CreditCard, to: "/pagos" },
+    { label: "Mi Perfil", icon: User, to: "/perfil" },
+    { label: "Ayuda", icon: HelpCircle, to: "/ayuda" },
+  ];
+
+  // Solo visible si rol admin — backend Prime: rol enum ['estudiante','instructor','admin'] y seed admin@gmail.com
+  const navItems = isAdmin
+    ? [...baseNavItems, { label: "Admin", icon: LayoutDashboard, to: "/admin" }]
+    : baseNavItems;
 
   const isActive = (path) => {
     if (path === "/") return location.pathname === "/";
