@@ -5,7 +5,8 @@ import {
     obtenerCursos,
     crearCurso,
     eliminarCurso,
-    actualizarCurso
+    actualizarCurso,
+    obtenerCursosActivos
 } from '../controllers/course.controller.js';
 
 
@@ -16,6 +17,9 @@ const router = Router();
 router.route('/')
   .get(obtenerCursos)      // GET /course/users -> Listar todos
   .post(crearCurso);   // POST /course/users -> Crear un nuevo curso
+
+router.route('/activos/')
+  .get(obtenerCursosActivos)
 
 // Rutas con parámetro ID: /api/users/:id
 router.route('/:id')

@@ -2,7 +2,9 @@ import express from 'express';
 import userRoutes from './routes/user.routes.js';
 import authRoutes from './routes/auth.routes.js'
 import courseRoutes from './routes/course.routes.js'
+import teacherRoutes from './routes/teacher.routes.js';
 import { errorHandler,notFoundHandler } from './middlewares/errorHandler.js';
+
 
 
 
@@ -33,6 +35,7 @@ app.use((req, res, next) => {
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/teachers', teacherRoutes);
 
 app.get('/', (req, res) => {
   res.json({ ok: true, message: 'API REST E-commerce Cursos activa' });

@@ -102,11 +102,6 @@ const courseSchema = new Schema(
       default: false
     },
 
-    eliminado: {
-      type: Boolean,
-      default: false
-    },
-
     thumbnailUrl: {
       type: String,
       default: null
