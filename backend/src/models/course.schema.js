@@ -127,6 +127,16 @@ const courseSchema = new Schema(
     fechaPublicacion: {
       type: Date,
       default: null
+    },
+
+    eliminado: {
+      type: Boolean,
+      default: false
+    },
+
+    activo: {
+      type: Boolean,
+      default: true
     }
   },
   {

@@ -1,10 +1,11 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, BookOpen, ClipboardList, LogOut, GraduationCap, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Tag, ClipboardList, LogOut, GraduationCap, ChevronRight } from "lucide-react";
 import { useAuthStore } from "../../hooks/useAuthStore.js";
 
 const adminNav = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/courses", label: "Cursos", icon: BookOpen },
+  { to: "/admin/categories", label: "Categorías", icon: Tag },
   { to: "/admin/instructors", label: "Instructores", icon: Users },
   { to: "/admin/enrollments", label: "Inscripciones", icon: ClipboardList },
 ];
@@ -21,7 +22,7 @@ export default function AdminLayout({ logo }) {
 
   return (
     <div className="min-h-screen flex bg-[#0f172a] font-['Montserrat',sans-serif]">
-      {/* Sidebar admin — replica VACACIONALPAG AdminLayout.jsx */}
+      {/* Sidebar admin */}
       <aside className="w-64 shrink-0 bg-[#0f172a] border-r border-slate-800 flex flex-col hidden md:flex">
         <div className="p-6 border-b border-slate-800">
           <div className="flex items-center gap-3">

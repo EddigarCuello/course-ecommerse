@@ -8,6 +8,7 @@ import Layout from "./components/Layout.jsx";
 import AdminLayout from "./pages/admin/AdminLayout.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import AdminCourses from "./pages/admin/AdminCourses.jsx";
+import AdminCategories from "./pages/admin/AdminCategories.jsx";
 import AdminInstructors from "./pages/admin/AdminInstructors.jsx";
 import AdminEnrollments from "./pages/admin/AdminEnrollments.jsx";
 
@@ -68,6 +69,7 @@ export default function App() {
         >
           <Route index element={<AdminDashboard />} />
           <Route path="courses" element={<AdminCourses />} />
+          <Route path="categories" element={<AdminCategories />} />
           <Route path="instructors" element={<AdminInstructors />} />
           <Route path="enrollments" element={<AdminEnrollments />} />
         </Route>

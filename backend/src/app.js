@@ -3,20 +3,16 @@ import userRoutes from './routes/user.routes.js';
 import authRoutes from './routes/auth.routes.js'
 import courseRoutes from './routes/course.routes.js'
 import teacherRoutes from './routes/teacher.routes.js';
+import categoryRoutes from './routes/category.routes.js';
 import { errorHandler,notFoundHandler } from './middlewares/errorHandler.js';
 
-
-
-
 const app = express();
-
 
 //
 app.use((req,res,next) => {
   console.log(`metodo de la peticion: ${req.method}\nurl de la peticion: ${req.url}`);
   next();
 });
-
 
 //Middlewares globales
 app.use(express.json());
@@ -36,6 +32,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/teachers', teacherRoutes);
+app.use('/api/categories', categoryRoutes);
 
 app.get('/', (req, res) => {
   res.json({ ok: true, message: 'API REST E-commerce Cursos activa' });

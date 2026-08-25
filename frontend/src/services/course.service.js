@@ -1,9 +1,7 @@
 import { api } from "./api.js";
 
 /**
- * Usa backend Prime existente: GET /api/courses
- * Controller: course.controller.js:5 -> populate categoria,instructor, filtra eliminado:false
- * Retorna { ok, total, data: Course[] } con Course: { _id, titulo, precio, capacidad, inscritos, estado, publicado, diasSemana, instructor:{nombre}, categoria:{nombre} }
+ * Servicio para interactuar con la API REST de Cursos (/api/courses)
  */
 export const courseService = {
   getAll: async () => {
@@ -18,6 +16,10 @@ export const courseService = {
   create: async (payload) => {
     const res = await api.post("/api/courses", payload);
     return res.data || res;
+  },
+  createBulk: async (coursesArray) => {
+    const res = await api.post("/api/courses/bulk", coursesArray);
+    return res;
   },
   update: async (id, payload) => {
     const res = await api.put(`/api/courses/${id}`, payload);
