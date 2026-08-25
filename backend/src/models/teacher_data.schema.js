@@ -1,5 +1,4 @@
 import { Schema, model } from 'mongoose';
-import bcrypt from 'bcryptjs';
 
 const teacherSchema = new Schema(
   {
@@ -20,11 +19,6 @@ const teacherSchema = new Schema(
         /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
         'Por favor ingresa un correo electrónico válido'
       ]
-    },
-
-    passwordHash: {
-      type: String,
-      required: [true, 'La contraseña es obligatoria']
     },
 
     telefono: {

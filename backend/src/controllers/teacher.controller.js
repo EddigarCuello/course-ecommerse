@@ -66,7 +66,6 @@ export const registrarProfesor = async (req, res, next) => {
     const {
       nombre,
       email,
-      password,
       telefono,
       pais,
       ciudad,
@@ -75,40 +74,96 @@ export const registrarProfesor = async (req, res, next) => {
     } = req.body;
 
     // 1. Validar campos obligatorios
-    if (!nombre || !email || !password) {
-      const error = new Error('Nombre, email y contraseña son obligatorios');
+    if (!nombre || !email) {
+      const error = new Error('Nombre y email son obligatorios');
       error.statusCode = 400;
       return next(error);
     }
 
     // 2. Comprobar si el email ya existe
-    const profesorExistente = await teacherModel.findOne({ email });
+    const profesorExistente = await teacherModel.findOne({ email: email.toLowerCase() });
     if (profesorExistente) {
       const error = new Error('El correo electrónico ya está registrado');
       error.statusCode = 400;
       return next(error);
     }
 
-    // 3. Crear el profesor (El pre('save') del schema encripta passwordHash)
+    // 3. Crear el profesor
     const nuevoProfesor = await teacherModel.create({
-      nombre,
-      email,
-      passwordHash: password,
-      telefono,
-      pais,
-      ciudad,
-      avatarUrl,
-      detallesInstructor
+      nombre: nombre.trim(),
+      email: email.toLowerCase().trim(),
+      telefono: telefono || '',
+      pais: pais || '',
+      ciudad: ciudad || '',
+      avatarUrl: avatarUrl || null,
+      detallesInstructor: detallesInstructor || { especializacion: '', departamento: '' }
     });
-
-    // 4. Formatear la respuesta omitiendo información sensible
-    const profesorRespuesta = nuevoProfesor.toObject();
-    delete profesorRespuesta.passwordHash;
 
     res.status(201).json({
       ok: true,
       message: 'Profesor registrado con éxito',
-      data: profesorRespuesta
+      data: nuevoProfesor
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/teachers/bulk
+export const registrarProfesoresMasivo = async (req, res, next) => {
+  try {
+    const lista = Array.isArray(req.body) ? req.body : req.body.teachers;
+    if (!Array.isArray(lista) || lista.length === 0) {
+      const error = new Error('Se requiere una lista no vacía de profesores');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const creados = [];
+    const omitidos = [];
+    const errores = [];
+
+    for (const item of lista) {
+      const nombre = (item.nombre || item.Nombre || item.name || '').toString().trim();
+      const email = (item.email || item.Email || item.correo || '').toString().trim().toLowerCase();
+      const telefono = (item.telefono || item.Telefono || item.phone || '').toString().trim();
+      const pais = (item.pais || item.Pais || item.country || '').toString().trim();
+      const ciudad = (item.ciudad || item.Ciudad || item.city || '').toString().trim();
+      const especializacion = (item.especializacion || item.Especializacion || item.detallesInstructor?.especializacion || '').toString().trim();
+      const departamento = (item.departamento || item.Departamento || item.detallesInstructor?.departamento || '').toString().trim();
+
+      if (!nombre || !email) {
+        errores.push({ item, motivo: 'Nombre y email son requeridos' });
+        continue;
+      }
+
+      const existe = await teacherModel.findOne({ email });
+      if (existe) {
+        omitidos.push({ email, motivo: 'El correo electrónico ya existe' });
+        continue;
+      }
+
+      const nuevoProfesor = await teacherModel.create({
+        nombre,
+        email,
+        telefono,
+        pais,
+        ciudad,
+        avatarUrl: item.avatarUrl || null,
+        detallesInstructor: {
+          especializacion,
+          departamento
+        }
+      });
+      creados.push(nuevoProfesor);
+    }
+
+    res.status(201).json({
+      ok: true,
+      message: `Procesamiento masivo completado. ${creados.length} creados, ${omitidos.length} omitidos, ${errores.length} errores.`,
+      creados,
+      omitidos,
+      errores
     });
   } catch (error) {
     next(error);

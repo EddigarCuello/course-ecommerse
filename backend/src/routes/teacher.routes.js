@@ -5,20 +5,22 @@ import {
     obtenerProfesores,
     obtenerTodosProfesores,
     registrarProfesor,
+    registrarProfesoresMasivo,
     actualizarProfesor,
     eliminarProfesor
  } from '../controllers/teacher.controller.js';
 
-
-
 const router = Router();
 
-// Rutas para la raíz: /api/users
+// Rutas para la raíz: /api/teachers
 router.route('/')
-  .get(obtenerTodosProfesores)      // GET /api/users -> Listar todos
-  .post(registrarProfesor);   // POST /api/users -> Crear un nuevo usuario
+  .get(obtenerTodosProfesores)
+  .post(registrarProfesor);
 
-router.route('/activos/')
+router.route('/bulk')
+  .post(registrarProfesoresMasivo);
+
+router.route('/activos')
  .get(obtenerProfesores);
 
 // Rutas con parámetro ID: /api/users/:id
