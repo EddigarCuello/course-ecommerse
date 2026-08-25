@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 // GET /api/courses - Obtener todos los cursos activos
 export const obtenerCursos = async (req, res, next) => {
   try {
-    const cursos = await CourseModel.find({ eliminado: false })
+    const cursos = await CourseModel.find()
       .populate('categoria', 'nombre') // Reemplaza ID por datos de la categoría
       .populate('instructor', 'nombre email avatarUrl'); // Reemplaza ID por datos del instructor
 
@@ -19,6 +19,25 @@ export const obtenerCursos = async (req, res, next) => {
     next(error);
   }
 };
+
+// GET /api/courses - Obtener todos los cursos activos
+export const obtenerCursosActivos = async (req, res, next) => {
+  try {
+    const cursos = await CourseModel.find({activo : true})
+      .populate('categoria', 'nombre') // Reemplaza ID por datos de la categoría
+      .populate('instructor', 'nombre email avatarUrl'); // Reemplaza ID por datos del instructor
+
+    res.status(200).json({
+      ok: true,
+      total: cursos.length,
+      data: cursos
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 
 // GET /api/courses/:id - Obtener un curso por ID
 export const obtenerCursoPorId = async (req, res, next) => {

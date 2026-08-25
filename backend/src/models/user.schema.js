@@ -48,7 +48,7 @@ const userSchema = new Schema(
     rol: {
       type: String,
       enum: {
-        values: ['estudiante', 'instructor', 'admin'],
+        values: ['estudiante', 'admin'],
         message: '{VALUE} no es un rol válido'
       },
       default: 'estudiante'
@@ -83,20 +83,6 @@ const userSchema = new Schema(
       type: Date,
       default: null
     },
-
-    // Solo se utiliza cuando rol === "instructor"
-    detallesInstructor: {
-      especializacion: {
-        type: String,
-        default: ''
-      },
-
-      tarifaHora: {
-        type: Number,
-        default: 0,
-        min: [0, 'La tarifa no puede ser negativa']
-      }
-    }
   },
   {
     timestamps: true,
