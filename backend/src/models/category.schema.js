@@ -22,12 +22,6 @@ const categorySchema = new Schema(
     color: {
       type: String,
       default: '#3b82f6'
-    },
-
-    categoriaPadre: {
-      type: Schema.Types.ObjectId,
-      ref: 'Category',
-      default: null
     }
   },
   {

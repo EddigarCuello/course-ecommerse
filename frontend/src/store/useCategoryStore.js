@@ -1,34 +1,54 @@
 import { create } from "zustand";
-
-/**
- * Colección de categorías en RAM — sin backend
- * Backend Prime tiene category.schema.js (nombre, descripcion, icono, color) pero no expone /api/categories
- * Se usa para probar POST /api/courses que requiere categoria ObjectId
- */
-function oid() {
-  return [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join("");
-}
-
-const mockCategories = [
-  { _id: oid(), nombre: "Programación", descripcion: "Desarrollo web y backend", icono: "Code", color: "#3b82f6" },
-  { _id: oid(), nombre: "Diseño", descripcion: "UX/UI y Figma", icono: "Palette", color: "#a855f7" },
-  { _id: oid(), nombre: "Marketing", descripcion: "Digital y ventas", icono: "TrendingUp", color: "#ec4899" },
-  { _id: oid(), nombre: "Data Science", descripcion: "Python, ML y análisis", icono: "BarChart3", color: "#10b981" },
-  { _id: oid(), nombre: "Negocios", descripcion: "Emprendimiento", icono: "Briefcase", color: "#f59e0b" },
-];
+import { categoryService } from "../services/category.service.js";
 
 export const useCategoryStore = create((set, get) => ({
-  categories: mockCategories,
+  categories: [],
+  loading: false,
+  error: null,
 
-  addCategory: (cat) =>
-    set((s) => ({
-      categories: [...s.categories, { _id: oid(), ...cat }],
-    })),
+  fetchCategories: async () => {
+    set({ loading: true, error: null });
+    try {
+      const data = await categoryService.getAll();
+      set({ categories: Array.isArray(data) ? data : [], loading: false });
+    } catch (err) {
+      set({ error: err.message, loading: false });
+    }
+  },
 
-  removeCategory: (id) =>
-    set((s) => ({
-      categories: s.categories.filter((c) => c._id !== id),
-    })),
+  addCategory: async (cat) => {
+    try {
+      const created = await categoryService.create(cat);
+      set((s) => ({ categories: [...s.categories, created] }));
+      return created;
+    } catch (err) {
+      console.error("Error al crear categoría:", err);
+      throw err;
+    }
+  },
+
+  updateCategory: async (id, data) => {
+    try {
+      const updated = await categoryService.update(id, data);
+      set((s) => ({
+        categories: s.categories.map((c) => (c._id === id ? updated : c)),
+      }));
+      return updated;
+    } catch (err) {
+      console.error("Error al actualizar categoría:", err);
+      throw err;
+    }
+  },
+
+  removeCategory: async (id) => {
+    try {
+      await categoryService.delete(id);
+      set((s) => ({ categories: s.categories.filter((c) => c._id !== id) }));
+    } catch (err) {
+      console.error("Error al eliminar categoría:", err);
+      throw err;
+    }
+  },
 
   getById: (id) => get().categories.find((c) => c._id === id),
 }));

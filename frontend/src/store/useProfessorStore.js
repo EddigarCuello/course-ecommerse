@@ -1,41 +1,70 @@
 import { create } from "zustand";
+import { teacherService } from "../services/teacher.service.js";
 
-/**
- * Colección de profesores en RAM — sin backend
- * Para probar POST /api/courses sin depender de GET /api/users
- * IDs son ObjectId válidos (24 hex) para que CourseModel instructor los acepte
- */
-function oid() {
-  return [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join("");
-}
-
-const mockProfessors = [
-  { _id: oid(), nombre: "Ana Torres", email: "ana.torres@prime.test", especializacion: "Frontend", avatarUrl: null, activo: true },
-  { _id: oid(), nombre: "Carlos Méndez", email: "carlos@prime.test", especializacion: "UX/UI", avatarUrl: null, activo: true },
-  { _id: oid(), nombre: "Lucía Fernández", email: "lucia@prime.test", especializacion: "Backend", avatarUrl: null, activo: true },
-  { _id: oid(), nombre: "Jorge Ruiz", email: "jorge@prime.test", especializacion: "Data", avatarUrl: null, activo: false },
+const initialProfessors = [
+  { nombre: "Ana Torres", email: "ana.torres@prime.test", telefono: "+51 987654321", detallesInstructor: { especializacion: "Frontend" }, activo: true },
+  { nombre: "Carlos Méndez", email: "carlos@prime.test", telefono: "+51 987654322", detallesInstructor: { especializacion: "UX/UI" }, activo: true },
+  { nombre: "Lucía Fernández", email: "lucia@prime.test", telefono: "+51 987654323", detallesInstructor: { especializacion: "Backend" }, activo: true },
+  { nombre: "Jorge Ruiz", email: "jorge@prime.test", telefono: "+51 987654324", detallesInstructor: { especializacion: "Data" }, activo: false },
 ];
 
 export const useProfessorStore = create((set, get) => ({
-  professors: mockProfessors,
+  professors: [],
+  loading: false,
+  error: null,
 
-  // Solo RAM — no llama a backend
-  getActive: () => get().professors.filter((p) => p.activo),
+  fetchProfessors: async () => {
+    set({ loading: true, error: null });
+    try {
+      let data = await teacherService.getAll();
+      if (!Array.isArray(data) || data.length === 0) {
+        // Autoseed de profesores por defecto si la base de datos está vacía
+        for (const prof of initialProfessors) {
+          await teacherService.create(prof).catch(() => {});
+        }
+        data = await teacherService.getAll();
+      }
+      set({ professors: Array.isArray(data) ? data : [], loading: false });
+    } catch (err) {
+      set({ error: err.message, loading: false });
+    }
+  },
 
-  addProfessor: (prof) =>
-    set((s) => ({
-      professors: [...s.professors, { _id: oid(), activo: true, ...prof }],
-    })),
+  getActive: () => get().professors.filter((p) => p.activo !== false),
 
-  updateProfessor: (id, data) =>
-    set((s) => ({
-      professors: s.professors.map((p) => (p._id === id ? { ...p, ...data } : p)),
-    })),
+  addProfessor: async (prof) => {
+    try {
+      const created = await teacherService.create(prof);
+      set((s) => ({ professors: [...s.professors, created] }));
+      return created;
+    } catch (err) {
+      console.error("Error al crear profesor:", err);
+      throw err;
+    }
+  },
 
-  removeProfessor: (id) =>
-    set((s) => ({
-      professors: s.professors.filter((p) => p._id !== id),
-    })),
+  updateProfessor: async (id, data) => {
+    try {
+      const updated = await teacherService.update(id, data);
+      set((s) => ({
+        professors: s.professors.map((p) => (p._id === id ? updated : p)),
+      }));
+      return updated;
+    } catch (err) {
+      console.error("Error al actualizar profesor:", err);
+      throw err;
+    }
+  },
 
-  reset: () => set({ professors: mockProfessors }),
+  removeProfessor: async (id) => {
+    try {
+      await teacherService.delete(id);
+      set((s) => ({
+        professors: s.professors.filter((p) => p._id !== id),
+      }));
+    } catch (err) {
+      console.error("Error al eliminar profesor:", err);
+      throw err;
+    }
+  },
 }));
