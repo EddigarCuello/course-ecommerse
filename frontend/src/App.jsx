@@ -11,6 +11,7 @@ import AdminCourses from "./pages/admin/AdminCourses.jsx";
 import AdminCategories from "./pages/admin/AdminCategories.jsx";
 import AdminInstructors from "./pages/admin/AdminInstructors.jsx";
 import AdminEnrollments from "./pages/admin/AdminEnrollments.jsx";
+import Payments from "./pages/Payments.jsx";
 
 function WithLayout({ children }) {
   return <Layout>{children}</Layout>;
@@ -54,7 +55,7 @@ export default function App() {
         <Route path="/cursos" element={<Navigate to="/catalog" replace />} />
         <Route path="/dashboard/*" element={<Navigate to="/catalog" replace />} />
         <Route path="/mis-cursos" element={<WithLayout><Placeholder title="Mis Cursos" /></WithLayout>} />
-        <Route path="/pagos" element={<WithLayout><Placeholder title="Pagos" /></WithLayout>} />
+        <Route path="/pagos" element={<WithLayout><Payments /></WithLayout>} />
         <Route path="/perfil" element={<WithLayout><Placeholder title="Mi Perfil" /></WithLayout>} />
         <Route path="/ayuda" element={<WithLayout><Placeholder title="Ayuda" /></WithLayout>} />
 
