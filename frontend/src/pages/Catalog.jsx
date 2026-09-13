@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, Sun, Sunset, Moon, Calendar, Clock, Users, ChevronRight, Loader2 } from "lucide-react";
+import { Search, Sun, Sunset, Moon, Calendar, Clock, Users, ChevronRight, Loader2, X } from "lucide-react";
 import { courseService } from "../services/course.service.js";
 
 function Badge({ available }) {
@@ -10,10 +10,112 @@ function Badge({ available }) {
   return <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-[#fef08a] text-[#ca8a04] w-fit mb-4">{available} cupos</span>;
 }
 
+function CourseModal({ course, onClose }) {
+  if (!course) return null;
+
+  const title = course.titulo || course.title || "Sin título";
+  const description = course.descripcion || "Sin descripción disponible.";
+  const professorName = course.instructor?.nombre || "Sin asignar";
+  const days = Array.isArray(course.diasSemana) ? course.diasSemana.join(", ") : course.diasSemana || "Por definir";
+  const time = course.horaInicio && course.horaFin ? `${course.horaInicio} - ${course.horaFin}` : "Por definir";
+  const enrolled = course.inscritos ?? 0;
+  const capacity = course.capacidad ?? 20;
+  const available = capacity - enrolled;
+  const price = Number(course.precio ?? 0);
+  const initial = professorName.charAt(0).toUpperCase();
+
+  const discount = price * 0.15;
+  const taxes = (price - discount) * 0.12;
+  const total = price - discount + taxes;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-[700px] relative overflow-hidden shadow-2xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        {/* Close Button */}
+        <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 bg-white rounded-full text-[#94a3b8] hover:text-[#0f172a] hover:bg-slate-100 transition-colors shadow-sm border border-slate-100">
+          <X size={20} />
+        </button>
+
+        <div className="p-8 overflow-y-auto flex-1">
+          <div className="flex flex-col md:flex-row gap-8 mb-6">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-[#0f172a] mb-4 pr-8">{title}</h2>
+              <Badge available={available} />
+              
+              <p className="text-[#64748b] text-sm leading-relaxed mb-6 mt-4">
+                {description}
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3 text-sm text-[#64748b]">
+                  <Clock size={16} className="text-[#94a3b8] shrink-0" /> {days} | {time}
+                </div>
+                <div className="flex items-center gap-3 text-sm text-[#64748b]">
+                  <Calendar size={16} className="text-[#94a3b8] shrink-0" /> Duración total del periodo vacacional
+                </div>
+                <div className="flex items-center gap-3 text-sm text-[#64748b]">
+                  <Users size={16} className="text-[#94a3b8] shrink-0" /> {enrolled} Inscritos de {capacity} cupos totales
+                </div>
+              </div>
+            </div>
+
+            {/* Instructor Card */}
+            <div className="md:w-[200px] shrink-0">
+              <div className="bg-[#0f172a] rounded-xl p-5 text-center text-white shadow-lg">
+                <div className="w-12 h-12 bg-[#22c55e] rounded-full flex items-center justify-center text-white font-bold text-lg mx-auto mb-3">
+                  {initial}
+                </div>
+                <div className="text-[10px] text-[#22c55e] font-bold tracking-wider mb-1 uppercase">Instructor</div>
+                <div className="font-bold mb-2 text-sm">{professorName}</div>
+                <p className="text-[#94a3b8] text-[11px] leading-relaxed">
+                  Profesional experto con años de experiencia impartiendo la materia.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Summary */}
+          <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-5 mb-6">
+            <h4 className="text-xs font-bold text-[#64748b] mb-4 uppercase tracking-wider">Resumen de Pago</h4>
+            <div className="flex justify-between text-sm text-[#64748b] mb-2">
+              <span>Precio original del curso</span>
+              <span>$ {price.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-[#22c55e] font-medium mb-2">
+              <span>Descuento Especial Beca (15%)</span>
+              <span>-$ {discount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-[#64748b] mb-4">
+              <span>Impuestos Nacionales (12%)</span>
+              <span>$ {taxes.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center border-t border-[#e2e8f0] pt-3">
+              <span className="font-bold text-[#0f172a]">Total a Pagar</span>
+              <span className="font-bold text-lg text-[#0f172a]">$ US$ {total.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="text-xs text-[#0f172a] font-medium mb-3 block">Selecciona método de pago:</label>
+            <div className="flex gap-2 bg-white p-1 rounded-lg border border-[#e2e8f0]">
+              <button className="flex-1 bg-[#f0fdf4] text-[#16a34a] font-medium text-xs py-2.5 rounded-md transition-all border border-[#bbf7d0]">Tarjeta (Stripe)</button>
+              <button className="flex-1 text-[#64748b] font-medium text-xs py-2.5 rounded-md hover:bg-[#f8fafc] transition-all">Transferencia / Efectivo</button>
+            </div>
+          </div>
+
+          <button className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-medium py-3 rounded-xl transition-all flex justify-center items-center gap-2">
+            Inscribirse &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function Catalog() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   const [search, setSearch] = useState("");
   const [scheduleFilter, setScheduleFilter] = useState("all"); // 'all', 'Mañana', 'Tarde', 'Noche'
@@ -169,7 +271,8 @@ export default function Catalog() {
             return (
               <div
                 key={course._id || course.id}
-                className="bg-white rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] p-6 relative border-t-4 border-[#16a34a] flex flex-col hover:-translate-y-1 hover:shadow-[0_15px_25px_-5px_rgba(0,0,0,0.1)] transition-all duration-200"
+                onClick={() => setSelectedCourse(course)}
+                className="bg-white rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] p-6 relative border-t-4 border-[#16a34a] flex flex-col hover:-translate-y-1 hover:shadow-[0_15px_25px_-5px_rgba(0,0,0,0.1)] transition-all duration-200 cursor-pointer"
               >
                 <Badge available={available} />
                 <h3 className="text-[1.15rem] font-semibold leading-snug mb-3 text-[#0f172a] line-clamp-2">{title}</h3>
@@ -205,6 +308,11 @@ export default function Catalog() {
             );
           })}
         </div>
+      )}
+      
+      {/* Modal Render */}
+      {selectedCourse && (
+        <CourseModal course={selectedCourse} onClose={() => setSelectedCourse(null)} />
       )}
     </div>
   );
