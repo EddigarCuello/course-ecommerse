@@ -1,4 +1,5 @@
 import { UserModel } from "../models/user.schema.js";
+import jwt from 'jsonwebtoken';
 
 // POST /api/auth/register
 export const register = async(req , res , next)=>{
@@ -112,10 +113,18 @@ export const login = async(req, res, next) => {
         const respuesta = usuario.toObject();
         delete respuesta.passwordHash;
 
+        // Generar JWT
+        const token = jwt.sign(
+          { id: usuario._id, email: usuario.email, rol: usuario.rol },
+          process.env.JWT_SECRET || 'secret_dev',
+          { expiresIn: '7d' }
+        );
+
         //enviar respuesta
         res.status(200).json({
             ok: true,
             message: 'Inicio de sesion exitoso',
+            token,
             data: respuesta
         });
     //manejo de errores

@@ -628,19 +628,13 @@ export default function AdminCourses() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 text-xs font-semibold mb-1">Estado</label>
-                  <select value={formData.estado} onChange={(e) => setFormData({ ...formData, estado: e.target.value })} className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-green-600">
-                    <option value="draft">Borrador</option>
-                    <option value="published">Publicado</option>
-                    <option value="finished">Finalizado</option>
-                  </select>
-                </div>
-                <label className="flex items-center gap-2 mt-6 cursor-pointer">
-                  <input type="checkbox" checked={formData.publicado} onChange={(e) => setFormData({ ...formData, publicado: e.target.checked })} className="accent-green-600" />
-                  <span className="text-sm text-slate-300">Publicado</span>
-                </label>
+              <div>
+                <label className="block text-slate-300 text-xs font-semibold mb-1">Estado</label>
+                <select value={formData.estado} onChange={(e) => setFormData({ ...formData, estado: e.target.value })} className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-green-600">
+                  <option value="draft">Borrador</option>
+                  <option value="published">Publicado</option>
+                  <option value="finished">Finalizado</option>
+                </select>
               </div>
 
               <div className="flex gap-3 pt-2">

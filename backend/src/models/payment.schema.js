@@ -28,7 +28,7 @@ const paymentSchema = new Schema(
     monto: {
       type: Number,
       required: true,
-      min: [0.01, 'El monto debe ser mayor que 0']
+      min: [0, 'El monto no puede ser negativo']
     },
 
     moneda: {
@@ -54,6 +54,11 @@ const paymentSchema = new Schema(
     },
 
     motivoFallo: {
+      type: String,
+      default: null
+    },
+
+    comprobanteUrl: {
       type: String,
       default: null
     }
