@@ -4,6 +4,9 @@ import { useAuthStore } from "./hooks/useAuthStore.js";
 import Auth from "./pages/Auth.jsx";
 import Home from "./pages/Home.jsx";
 import Catalog from "./pages/Catalog.jsx";
+import MyCourses from "./pages/MyCourses.jsx";
+import Profile from "./pages/Profile.jsx";
+import Help from "./pages/Help.jsx";
 import Layout from "./components/Layout.jsx";
 import AdminLayout from "./pages/admin/AdminLayout.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
@@ -54,10 +57,10 @@ export default function App() {
         <Route path="/catalog" element={<WithLayout><Catalog /></WithLayout>} />
         <Route path="/cursos" element={<Navigate to="/catalog" replace />} />
         <Route path="/dashboard/*" element={<Navigate to="/catalog" replace />} />
-        <Route path="/mis-cursos" element={<WithLayout><Placeholder title="Mis Cursos" /></WithLayout>} />
+        <Route path="/mis-cursos" element={<WithLayout><MyCourses /></WithLayout>} />
         <Route path="/pagos" element={<WithLayout><Payments /></WithLayout>} />
-        <Route path="/perfil" element={<WithLayout><Placeholder title="Mi Perfil" /></WithLayout>} />
-        <Route path="/ayuda" element={<WithLayout><Placeholder title="Ayuda" /></WithLayout>} />
+        <Route path="/perfil" element={<WithLayout><Profile /></WithLayout>} />
+        <Route path="/ayuda" element={<WithLayout><Help /></WithLayout>} />
 
         {/* Admin — protegido por rol, layout independiente oscuro */}
         <Route
