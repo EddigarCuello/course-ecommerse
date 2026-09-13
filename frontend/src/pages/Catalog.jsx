@@ -271,6 +271,9 @@ export default function Catalog() {
   };
 
   const filteredCourses = courses.filter((c) => {
+    // Solo mostrar cursos que estén publicados explícitamente (ni borradores ni finalizados)
+    if (c.estado !== 'published') return false;
+
     // Ocultar cursos en los que el usuario ya está inscrito
     const courseId = c._id || c.id;
     if (isAuthenticated && enrolledCourseIds.has(courseId)) return false;
