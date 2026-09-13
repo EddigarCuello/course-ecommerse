@@ -6,6 +6,7 @@ import Home from "./pages/Home.jsx";
 import Catalog from "./pages/Catalog.jsx";
 import MyCourses from "./pages/MyCourses.jsx";
 import Profile from "./pages/Profile.jsx";
+import Help from "./pages/Help.jsx";
 import Layout from "./components/Layout.jsx";
 import AdminLayout from "./pages/admin/AdminLayout.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
@@ -59,7 +60,7 @@ export default function App() {
         <Route path="/mis-cursos" element={<WithLayout><MyCourses /></WithLayout>} />
         <Route path="/pagos" element={<WithLayout><Payments /></WithLayout>} />
         <Route path="/perfil" element={<WithLayout><Profile /></WithLayout>} />
-        <Route path="/ayuda" element={<WithLayout><Placeholder title="Ayuda" /></WithLayout>} />
+        <Route path="/ayuda" element={<WithLayout><Help /></WithLayout>} />
 
         {/* Admin — protegido por rol, layout independiente oscuro */}
         <Route
