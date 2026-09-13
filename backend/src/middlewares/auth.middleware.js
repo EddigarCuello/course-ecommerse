@@ -20,3 +20,15 @@ export const authRequired = (req, res, next) => {
     return res.status(401).json({ error: 'Token inválido o expirado.' });
   }
 };
+
+/**
+ * Middleware para asegurar que el usuario tenga rol de administrador.
+ * Debe ir después de authRequired.
+ */
+export const adminRequired = (req, res, next) => {
+  if (req.user && req.user.rol === 'admin') {
+    next();
+  } else {
+    return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de administrador.' });
+  }
+};

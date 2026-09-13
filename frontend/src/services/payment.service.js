@@ -44,5 +44,38 @@ export const paymentService = {
   registerCashPayment: async (courseId) => {
     const res = await api.post("/api/payments/register-cash", { courseId });
     return res;
+  },
+
+  // --- MÉTODOS DE ADMINISTRADOR ---
+
+  /**
+   * Obtiene todos los pagos (para admin)
+   */
+  getAllPayments: async () => {
+    const res = await api.get("/api/payments/admin/all");
+    return res.payments || [];
+  },
+
+  /**
+   * Actualiza el estado de un pago (para admin)
+   * @param {string} paymentId - ID del pago
+   * @param {string} status - Nuevo estado ('paid', 'pending', 'failed', 'refunded')
+   */
+  updatePaymentStatus: async (paymentId, status) => {
+    const res = await api.put(`/api/payments/admin/${paymentId}/status`, { status });
+    return res;
+  },
+
+  /**
+   * Sube un comprobante de pago
+   * @param {string} paymentId - ID del pago
+   * @param {File} file - Archivo de imagen
+   */
+  uploadReceipt: async (paymentId, file) => {
+    const formData = new FormData();
+    formData.append("receipt", file);
+
+    const res = await api.post(`/api/payments/${paymentId}/receipt`, formData);
+    return res;
   }
 };

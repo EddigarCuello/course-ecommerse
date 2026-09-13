@@ -56,6 +56,11 @@ const paymentSchema = new Schema(
     motivoFallo: {
       type: String,
       default: null
+    },
+
+    comprobanteUrl: {
+      type: String,
+      default: null
     }
   },
   {

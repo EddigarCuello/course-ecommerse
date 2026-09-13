@@ -1,4 +1,6 @@
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import userRoutes from './routes/user.routes.js';
 import authRoutes from './routes/auth.routes.js'
 import courseRoutes from './routes/course.routes.js'
@@ -7,7 +9,13 @@ import categoryRoutes from './routes/category.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import { errorHandler,notFoundHandler } from './middlewares/errorHandler.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
+
+// Servir la carpeta uploads como estática
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 //
 app.use((req,res,next) => {

@@ -1,17 +1,6 @@
-import { Search, ClipboardList } from "lucide-react";
-
-/**
- * Admin Inscripciones — estático
- * Replica AdminEnrollments.jsx: tabla estudiante/curso/monto/estado/fecha
- * VACACIONALPAG: enrollments + profiles + courses (Supabase). Prime: EnrollmentModel {usuario, curso, estadoPago, montoPagado}
- * Backend aún sin ruta /api/enrollments (solo modelos), por eso vista estática con mock
- */
-const mockEnrollments = [
-  { _id: "e1", usuario: { nombre: "Sofía López" }, curso: { titulo: "React Avanzado", precio: 49.99 }, montoPagado: 49.99, estadoPago: "paid", fechaInscripcion: "2026-08-10" },
-  { _id: "e2", usuario: { nombre: "Juan Pérez" }, curso: { titulo: "UX/UI con Figma", precio: 39.99 }, montoPagado: 39.99, estadoPago: "pending", fechaInscripcion: "2026-08-12" },
-  { _id: "e3", usuario: { nombre: "María Gómez" }, curso: { titulo: "Node.js API REST", precio: 59.99 }, montoPagado: 59.99, estadoPago: "paid", fechaInscripcion: "2026-08-13" },
-  { _id: "e4", usuario: { nombre: "Pedro Ruiz" }, curso: { titulo: "Python Data" }, montoPagado: null, estadoPago: "failed", fechaInscripcion: "2026-08-14" },
-];
+import { useState, useEffect } from "react";
+import { Search, ClipboardList, Loader2, Check, X, AlertCircle } from "lucide-react";
+import { paymentService } from "../../services/payment.service.js";
 
 const statusColors = {
   paid: "bg-green-500/15 text-green-400",
@@ -19,18 +8,66 @@ const statusColors = {
   failed: "bg-red-500/15 text-red-400",
   refunded: "bg-slate-500/15 text-slate-400",
 };
+
 const statusLabels = { paid: "Pagado", pending: "Pendiente", failed: "Fallido", refunded: "Reembolsado" };
 
 export default function AdminEnrollments() {
-  const totalRevenue = mockEnrollments.filter((e) => e.estadoPago === "paid").reduce((sum, e) => sum + (e.montoPagado ?? e.curso.precio), 0);
+  const [enrollments, setEnrollments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [updating, setUpdating] = useState(null); // ID del pago que se está actualizando
+
+  useEffect(() => {
+    fetchEnrollments();
+  }, []);
+
+  const fetchEnrollments = async () => {
+    try {
+      setLoading(true);
+      const data = await paymentService.getAllPayments();
+      setEnrollments(data);
+    } catch (error) {
+      console.error("Error al cargar inscripciones:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (paymentId, newStatus) => {
+    try {
+      setUpdating(paymentId);
+      await paymentService.updatePaymentStatus(paymentId, newStatus);
+      // Actualizar estado local
+      setEnrollments((prev) =>
+        prev.map((e) => (e._id === paymentId ? { ...e, estado: newStatus } : e))
+      );
+    } catch (error) {
+      console.error("Error al actualizar estado:", error);
+      alert("Error al actualizar estado: " + (error.response?.data?.error || error.message));
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const filteredEnrollments = enrollments.filter((e) => {
+    const term = searchTerm.toLowerCase();
+    const userName = e.usuario?.nombre?.toLowerCase() || "";
+    const courseTitle = e.inscripcion?.curso?.titulo?.toLowerCase() || e.inscripcion?.curso?.title?.toLowerCase() || "";
+    const method = e.metodoPago?.toLowerCase() || "";
+    return userName.includes(term) || courseTitle.includes(term) || method.includes(term);
+  });
+
+  const totalRevenue = enrollments
+    .filter((e) => e.estado === "paid")
+    .reduce((sum, e) => sum + (e.monto || 0), 0);
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="p-6 md:p-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Inscripciones</h1>
+          <h1 className="text-2xl font-bold text-white">Inscripciones / Pagos</h1>
           <p className="text-slate-400 text-sm mt-1">
-            {mockEnrollments.length} inscripciones · <span className="text-green-400">${totalRevenue.toFixed(2)} recaudados</span> — estático
+            {enrollments.length} transacciones · <span className="text-green-400">${totalRevenue.toFixed(2)} recaudados</span>
           </p>
         </div>
         <div className="w-10 h-10 bg-green-600/20 rounded-xl flex items-center justify-center">
@@ -40,14 +77,20 @@ export default function AdminEnrollments() {
 
       <div className="relative mb-6">
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-        <input disabled placeholder="Buscar por estudiante o curso... (deshabilitado)" className="w-full max-w-sm pl-10 pr-4 py-2.5 bg-[#1e293b] border border-slate-700 rounded-xl text-sm placeholder-slate-500" />
+        <input
+          type="text"
+          placeholder="Buscar por estudiante, curso o método de pago..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full max-w-sm pl-10 pr-4 py-2.5 bg-[#1e293b] border border-slate-700 rounded-xl text-sm placeholder-slate-500 text-white focus:outline-none focus:border-green-500 transition-colors"
+        />
       </div>
 
       <div className="bg-[#1e293b] border border-slate-700 rounded-2xl overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[700px]">
+        <table className="w-full text-left border-collapse min-w-[900px]">
           <thead>
-            <tr className="border-b border-slate-700">
-              {["Estudiante", "Curso", "Monto", "Estado pago", "Fecha"].map((h) => (
+            <tr className="border-b border-slate-700 bg-slate-800/50">
+              {["Estudiante", "Curso", "Monto", "Método", "Fecha", "Estado", "Acciones"].map((h) => (
                 <th key={h} className="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   {h}
                 </th>
@@ -55,23 +98,105 @@ export default function AdminEnrollments() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-700/50">
-            {mockEnrollments.map((e) => (
-              <tr key={e._id} className="hover:bg-slate-700/20">
-                <td className="px-6 py-4 text-slate-200 text-sm font-medium">{e.usuario.nombre}</td>
-                <td className="px-6 py-4 text-slate-300 text-sm">{e.curso.titulo}</td>
-                <td className="px-6 py-4 text-slate-300 text-sm">${(e.montoPagado ?? e.curso.precio).toFixed(2)}</td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[e.estadoPago]}`}>{statusLabels[e.estadoPago]}</span>
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="px-6 py-12 text-center text-slate-400">
+                  <Loader2 size={24} className="animate-spin mx-auto mb-2 text-green-500" />
+                  Cargando inscripciones...
                 </td>
-                <td className="px-6 py-4 text-slate-400 text-sm">{new Date(e.fechaInscripcion).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}</td>
               </tr>
-            ))}
+            ) : filteredEnrollments.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="px-6 py-12 text-center text-slate-400">
+                  <AlertCircle size={24} className="mx-auto mb-2 text-slate-500" />
+                  No se encontraron inscripciones
+                </td>
+              </tr>
+            ) : (
+              filteredEnrollments.map((e) => {
+                const title = e.inscripcion?.curso?.titulo || e.inscripcion?.curso?.title || 'Curso eliminado';
+                const method = e.metodoPago === 'cash_transfer' ? 'Efectivo/Transferencia' : 'Stripe';
+                const date = new Date(e.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric", hour: '2-digit', minute: '2-digit' });
+                
+                return (
+                  <tr key={e._id} className="hover:bg-slate-700/20 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 overflow-hidden shrink-0">
+                          {e.usuario?.avatarUrl ? <img src={e.usuario.avatarUrl} alt="" className="w-full h-full object-cover" /> : e.usuario?.nombre?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-slate-200 text-sm font-medium">{e.usuario?.nombre || 'Usuario eliminado'}</span>
+                          <span className="text-slate-500 text-xs">{e.usuario?.email || '-'}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-300 text-sm">{title}</td>
+                    <td className="px-6 py-4 text-slate-300 text-sm font-medium">${(e.monto || 0).toFixed(2)}</td>
+                    <td className="px-6 py-4 text-slate-400 text-sm">{method}</td>
+                    <td className="px-6 py-4 text-slate-400 text-sm">{date}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[e.estado] || statusColors.failed}`}>
+                        {statusLabels[e.estado] || e.estado}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        {updating === e._id ? (
+                          <Loader2 size={16} className="animate-spin text-slate-400" />
+                        ) : e.estado === 'pending' ? (
+                          <>
+                            <button
+                              title="Aprobar pago"
+                              onClick={() => handleUpdateStatus(e._id, 'paid')}
+                              className="p-1.5 bg-green-500/10 text-green-400 hover:bg-green-500/20 rounded transition-colors"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button
+                              title="Rechazar pago"
+                              onClick={() => handleUpdateStatus(e._id, 'failed')}
+                              className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded transition-colors"
+                            >
+                              <X size={16} />
+                            </button>
+                          </>
+                        ) : e.estado === 'paid' ? (
+                           <button
+                             title="Marcar como reembolsado"
+                             onClick={() => {
+                               if(window.confirm('¿Estás seguro de marcar este pago como reembolsado? Se quitará el acceso al curso.')) {
+                                 handleUpdateStatus(e._id, 'refunded');
+                               }
+                             }}
+                             className="text-xs px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition-colors"
+                           >
+                             Reembolsar
+                           </button>
+                        ) : (
+                          <span className="text-xs text-slate-600">-</span>
+                        )}
+
+                        {e.comprobanteUrl && (
+                          <a
+                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${e.comprobanteUrl}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="ml-2 text-xs px-2 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded transition-colors"
+                            title="Ver comprobante"
+                          >
+                            Ver comprobante
+                          </a>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500 mt-4">
-        Modelo Prime: <code className="bg-[#1e293b] px-1 rounded">enrollment.schema.js</code> con <code className="bg-[#1e293b] px-1 rounded">usuario, curso, estadoPago, montoPagado</code>. Cuando exista <code className="bg-[#1e293b] px-1 rounded">GET /api/enrollments</code> con populate usuario/curso, reemplazar mock.
-      </p>
     </div>
   );
 }

@@ -47,10 +47,33 @@ export default function MyCourses() {
     .filter(p => p.estado === 'paid' || p.estado === 'pending')
     .map(p => ({
       ...p.inscripcion?.curso,
+      paymentId: p._id,
       paymentState: p.estado,
       metodoPago: p.metodoPago,
+      comprobanteUrl: p.comprobanteUrl,
     }))
     .filter(c => c && c._id);
+
+  const [uploadingId, setUploadingId] = useState(null);
+
+  const handleUploadReceipt = async (paymentId, event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      setUploadingId(paymentId);
+      await paymentService.uploadReceipt(paymentId, file);
+      alert("Comprobante enviado exitosamente.");
+      // Recargar pagos
+      const myPayments = await paymentService.getMyPayments();
+      setPayments(myPayments);
+    } catch (error) {
+      console.error("Error al subir comprobante:", error);
+      alert("Error al subir el comprobante: " + (error.response?.data?.error || error.message));
+    } finally {
+      setUploadingId(null);
+    }
+  };
 
   return (
     <div className="p-6 md:p-8 max-w-[1200px] mx-auto w-full animate-fade-in">
@@ -115,6 +138,7 @@ export default function MyCourses() {
           {enrolledCourses.map((course, idx) => {
             const isPending   = course.paymentState === 'pending';
             const isCash      = course.metodoPago === 'cash_transfer';
+            const hasReceipt  = !!course.comprobanteUrl;
             const professorName = course.instructor?.nombre || "Sin asignar";
             const days = Array.isArray(course.diasSemana)
               ? course.diasSemana.join(", ")
@@ -160,11 +184,38 @@ export default function MyCourses() {
                   </div>
                 </div>
 
-                {/* Cash warning */}
+                {/* Cash warning & Upload Button */}
                 {isPending && isCash && (
-                  <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-                    💳 Envía tu comprobante al administrador para activar el acceso.
-                  </p>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                      💳 Envía tu comprobante al administrador para activar el acceso.
+                    </p>
+                    
+                    {hasReceipt ? (
+                       <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-center gap-1">
+                         <CheckCircle2 size={14} /> Comprobante enviado, esperando revisión.
+                       </p>
+                    ) : (
+                      <div className="mt-1">
+                        <label className={`cursor-pointer inline-flex items-center justify-center text-xs font-semibold px-4 py-2 rounded-lg transition-colors ${
+                            uploadingId === course.paymentId ? "bg-slate-100 text-slate-400" : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                        }`}>
+                          {uploadingId === course.paymentId ? (
+                            <>
+                              <Loader2 size={14} className="animate-spin mr-2" /> Subiendo...
+                            </>
+                          ) : "Subir comprobante"}
+                          <input 
+                            type="file" 
+                            accept="image/*,application/pdf" 
+                            className="hidden" 
+                            disabled={uploadingId === course.paymentId}
+                            onChange={(e) => handleUploadReceipt(course.paymentId, e)}
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* Footer */}

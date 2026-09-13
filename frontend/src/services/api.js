@@ -23,7 +23,13 @@ async function request(path, { method = "GET", body, headers = {} } = {}) {
   }
 
   if (body) {
-    config.body = JSON.stringify(body);
+    if (body instanceof FormData) {
+      config.body = body;
+      // Fetch setea el boundary solo si NO existe el header Content-Type
+      delete config.headers["Content-Type"];
+    } else {
+      config.body = JSON.stringify(body);
+    }
   }
 
   const res = await fetch(url, config);

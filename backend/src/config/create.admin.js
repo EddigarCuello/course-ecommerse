@@ -14,10 +14,13 @@ export const createAdmin = async() => {
 
 
         //crear el admin
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('AdminPassword123', salt);
+
         const adminUser = new UserModel({
             nombre : 'ADMIN',
             email : 'admin@gmail.com', 
-            passwordHash : 'AdminPassword123', 
+            passwordHash : hashedPassword, 
             rol : 'admin',
             avatarUrl : "https://imgcdn.stablediffusionweb.com/2024/9/8/2ee8c87f-e8e4-4f2a-a475-3dac6fa8feb9.jpg"
         });

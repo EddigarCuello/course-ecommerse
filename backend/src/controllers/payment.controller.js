@@ -256,3 +256,103 @@ export const registerCashEnrollment = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * GET /api/payments/admin/all
+ * Obtiene todos los pagos registrados (para el panel de admin).
+ */
+export const getAllPayments = async (req, res, next) => {
+  try {
+    const payments = await PaymentModel.find()
+      .populate({
+        path: 'inscripcion',
+        populate: {
+          path: 'curso',
+          select: 'titulo title precio diasSemana horaInicio horaFin capacidad inscritos descripcion instructor',
+          populate: { path: 'instructor', select: 'nombre' }
+        }
+      })
+      .populate({
+        path: 'usuario',
+        select: 'nombre email avatarUrl'
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ payments });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PUT /api/payments/admin/:paymentId/status
+ * Actualiza el estado de un pago (ej. de pending a paid o failed).
+ */
+export const updatePaymentStatus = async (req, res, next) => {
+  try {
+    const { paymentId } = req.params;
+    const { status } = req.body;
+
+    if (!['paid', 'pending', 'failed', 'refunded'].includes(status)) {
+      return res.status(400).json({ error: 'Estado de pago inválido.' });
+    }
+
+    const payment = await PaymentModel.findById(paymentId).populate('inscripcion');
+    if (!payment) {
+      return res.status(404).json({ error: 'Pago no encontrado.' });
+    }
+
+    payment.estado = status;
+    await payment.save();
+
+    // Sincronizar el estado en la inscripción correspondiente
+    if (payment.inscripcion) {
+      const enrollment = await EnrollmentModel.findById(payment.inscripcion._id);
+      if (enrollment) {
+        enrollment.estadoPago = status;
+        if (status === 'paid' && !enrollment.fechaPago) {
+           enrollment.fechaPago = new Date();
+        }
+        await enrollment.save();
+      }
+    }
+
+    res.status(200).json({ ok: true, message: 'Estado de pago actualizado', payment });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/payments/:paymentId/receipt
+ * Sube el comprobante de pago para pagos en efectivo/transferencia.
+ */
+export const uploadReceipt = async (req, res, next) => {
+  try {
+    const { paymentId } = req.params;
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se subió ningún archivo.' });
+    }
+
+    const payment = await PaymentModel.findById(paymentId);
+    if (!payment) {
+      return res.status(404).json({ error: 'Pago no encontrado.' });
+    }
+
+    // Guardar la URL local del archivo
+    // Asumimos que la app se sirve desde el mismo host en desarrollo
+    const fileUrl = `/uploads/${req.file.filename}`;
+    
+    payment.comprobanteUrl = fileUrl;
+    await payment.save();
+
+    res.status(200).json({ 
+      ok: true, 
+      message: 'Comprobante subido correctamente', 
+      comprobanteUrl: fileUrl 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
