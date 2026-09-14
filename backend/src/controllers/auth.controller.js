@@ -83,23 +83,18 @@ export const login = async(req, res, next) => {
         }
 
         //buscar que exista el usuario y que no este eliminado
-        const usuario = await UserModel.findOne({email, eliminado: false});
+        const usuario = await UserModel.findOne({email: email?.toLowerCase().trim(), eliminado: false});
         if(!usuario){
+            console.log(`[LOGIN INVASIVO] Usuario NO encontrado en BD: ${email}`);
             const error = new Error('credenciales incorrectas');
             error.statusCode = 401;
             return next(error);
         }
-        //validar la contraseña (por ahora no se esta hasheando)(obsoleto)
-        /*
-        if (password !== usuario.passwordHash){
-            const error = new Error('contraseña incorrecta');
-            error.statusCode = 401;
-            return next(error);
-        }
-        */
+
         //usamos el metodo de instancia para verificar la password
         const esPasswordValido = await usuario.compararPassword(password);
         if(!esPasswordValido) {
+            console.log(`[LOGIN INVASIVO] Contraseña invalida para el usuario: ${email}`);
             const error = Error('credenciales incorrectas');
             error.statusCode = 401;
             return next(error);
