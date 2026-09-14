@@ -3,8 +3,8 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Argumento para URL de la API (por defecto utiliza /api a través del proxy Nginx)
-ARG VITE_API_URL=/api
+# Argumento para URL de la API (vacio "" para que las rutas /api/xxx no se dupliquen con Nginx proxy)
+ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
 
 # Copiar paquetes e instalar dependencias
