@@ -48,7 +48,7 @@ const userSchema = new Schema(
     rol: {
       type: String,
       enum: {
-        values: ['estudiante', 'admin'],
+        values: ['estudiante', 'admin', 'instructor'],
         message: '{VALUE} no es un rol válido'
       },
       default: 'estudiante'
