@@ -16,4 +16,8 @@ export const userService = {
     const res = await api.get(`/api/users/${id}`);
     return res.data || res;
   },
+  update: async (id, payload) => {
+    const res = await api.put(`/api/users/${id}`, payload);
+    return res.data || res;
+  },
 };
