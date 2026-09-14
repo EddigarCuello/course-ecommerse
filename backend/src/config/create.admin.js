@@ -2,30 +2,34 @@ import { UserModel } from "../models/user.schema.js";
 
 export const createAdmin = async () => {
     try {
-        const adminEmail = (process.env.ADMIN_EMAIL || 'admin@gmail.com').toLowerCase().trim();
-        const adminPassword = process.env.ADMIN_PASSWORD || 'AdminPassword123';
+        const envEmail = (process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+        const envPassword = process.env.ADMIN_PASSWORD || 'AdminPassword123';
 
-        let adminUser = await UserModel.findOne({ email: adminEmail });
+        // Lista de correos admin a asegurar (admin@gmail.com, admin@course.com y el del .env)
+        const emailsToEnsure = Array.from(new Set([
+            'admin@gmail.com',
+            'admin@course.com',
+            envEmail
+        ])).filter(Boolean);
 
-        if (!adminUser) {
-            adminUser = new UserModel({
-                nombre: 'ADMIN',
-                email: adminEmail,
-                passwordHash: adminPassword, // El hook pre('save') del schema se encarga de encriptar
-                rol: 'admin',
-                avatarUrl: "https://imgcdn.stablediffusionweb.com/2024/9/8/2ee8c87f-e8e4-4f2a-a475-3dac6fa8feb9.jpg"
-            });
-            await adminUser.save();
-            console.log('Admin creado exitosamente');
-        } else {
-            // Si el admin existe pero tiene un doble hash previo, corregimos la contraseña automáticamente
-            const esValido = await adminUser.compararPassword(adminPassword);
-            if (!esValido) {
-                adminUser.passwordHash = adminPassword; // Disparará el pre('save') para hashear correctamente 1 vez
+        for (const email of emailsToEnsure) {
+            let adminUser = await UserModel.findOne({ email });
+
+            if (!adminUser) {
+                adminUser = new UserModel({
+                    nombre: 'ADMIN',
+                    email,
+                    passwordHash: 'AdminPassword123',
+                    rol: 'admin',
+                    avatarUrl: "https://imgcdn.stablediffusionweb.com/2024/9/8/2ee8c87f-e8e4-4f2a-a475-3dac6fa8feb9.jpg"
+                });
                 await adminUser.save();
-                console.log('Contraseña del Administrador corregida y actualizada');
+                console.log(`Admin ${email} creado exitosamente`);
             } else {
-                console.log('Administrador Activo');
+                // Actualizar la contraseña a AdminPassword123 para garantizar acceso limpio sin doble hash
+                adminUser.passwordHash = 'AdminPassword123';
+                await adminUser.save();
+                console.log(`Admin ${email} clave restablecida correctamente`);
             }
         }
     } catch (error) {
