@@ -3,7 +3,9 @@
  * Usa VITE_API_URL o proxy de Vite (/api -> localhost:3000)
  */
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const rawBaseUrl = import.meta.env.VITE_API_URL || "";
+// Si VITE_API_URL es "/api" y las rutas ya inician con "/api", evitamos duplicar a "/api/api"
+const API_URL = rawBaseUrl.replace(/\/api\/?$/, "");
 
 async function request(path, { method = "GET", body, headers = {} } = {}) {
   const url = `${API_URL}${path}`;
