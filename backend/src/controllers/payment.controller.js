@@ -3,7 +3,10 @@ import { CourseModel } from '../models/course.schema.js';
 import { EnrollmentModel } from '../models/enrollment.schema.js';
 import { PaymentModel } from '../models/payment.schema.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripeSecretKey = (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.trim())
+  ? process.env.STRIPE_SECRET_KEY.trim()
+  : 'sk_test_dummy_key_placeholder_for_development';
+const stripe = new Stripe(stripeSecretKey);
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
